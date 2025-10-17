@@ -5,6 +5,26 @@
 
 ---
 
+## 可视化示例
+
+### 端元丰度分布可视化
+
+下图展示了 Jasper Ridge 数据集上，4 个端元（Tree, Water, Soil, Road）真实丰度与模型估计丰度的灰度分布对比：
+
+<p align="center">
+  <img src="abundance_compare.png" alt="端元丰度分布对比" width="100%">
+</p>
+
+### 训练过程与丰度拟合结果
+
+左图为训练与验证损失曲线，右图为丰度拟合的散点对比（理想拟合为红色虚线）：
+
+<p align="center">
+  <img src="results.png" alt="训练过程与丰度拟合结果" width="100%">
+</p>
+
+---
+
 ## 目录结构
 
 ```
