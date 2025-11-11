@@ -4,6 +4,45 @@ import matplotlib.pyplot as plt
 from data_loader import load_dataset
 from model import DeepUnmixingCNN
 
+def plot_endmember_comparison(true_endmembers, learned_endmembers, save_path=None):
+    """
+    可视化真实端元与学习端元的光谱曲线对比
+    
+    Args:
+        true_endmembers: (n_bands, n_endmembers) 真实端元矩阵
+        learned_endmembers: (n_bands, n_endmembers) 学习到的端元矩阵
+        save_path: 保存路径（可选）
+    """
+    endmember_names = ["Tree", "Water", "Soil", "Road"]
+    n_endmembers = true_endmembers.shape[1]
+    n_bands = true_endmembers.shape[0]
+    
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    axes = axes.flatten()
+    
+    for i in range(n_endmembers):
+        ax = axes[i] if i < len(axes) else plt.subplot(2, 2, i + 1)
+        
+        # 绘制真实端元
+        ax.plot(range(n_bands), true_endmembers[:, i], 
+                'b-', linewidth=2, label='True', alpha=0.7)
+        
+        # 绘制学习端元
+        ax.plot(range(n_bands), learned_endmembers[:, i], 
+                'r--', linewidth=2, label='Learned', alpha=0.7)
+        
+        title = endmember_names[i] if i < len(endmember_names) else f'Endmember {i+1}'
+        ax.set_title(f'{title} Spectral Signature', fontsize=12, fontweight='bold')
+        ax.set_xlabel('Band Index', fontsize=10)
+        ax.set_ylabel('Reflectance', fontsize=10)
+        ax.legend(fontsize=10)
+        ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.show()
+
 def plot_abundance_comparison(true_abundance, pred_abundance, img_shape, save_path=None):
     """
     可视化真实丰度与估计丰度的灰度分布对比
@@ -59,3 +98,8 @@ if __name__ == '__main__':
 
     # 可视化对比
     plot_abundance_comparison(abundance, pred_abundance, img_shape, save_path='abundance_compare.png')
+    
+    # 可视化端元重构
+    learned_endmembers = model.get_endmembers()
+    print("\nVisualizing endmember reconstruction...")
+    plot_endmember_comparison(endmembers, learned_endmembers, save_path='endmember_comparison.png')

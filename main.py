@@ -5,6 +5,7 @@ from data_loader import load_dataset, prepare_dataloaders
 from model import DeepUnmixingCNN, DeepUnmixingAutoencoder
 from train import UnmixingTrainer
 from metrics import calculate_metrics, mean_sad
+from compare_abundance_visual import plot_abundance_comparison, plot_endmember_comparison
 
 def plot_abundance_comparison(true_abundance, pred_abundance, img_shape, save_path=None):
     """
@@ -129,6 +130,13 @@ def run_experiment(dataset_name='jasper', model_type='cnn', mode='train'):
     if endmembers is not None:
         endmember_sad = mean_sad(endmembers, learned_endmembers)
         print(f"Mean SAD (Endmembers): {endmember_sad:.6f}")
+        
+        # 可视化端元重构
+        print("\nVisualizing endmember reconstruction...")
+        plot_endmember_comparison(endmembers, learned_endmembers, 
+                                 save_path=f'endmember_comparison_{dataset_name}.png')
+        plot_endmember_heatmap(endmembers, learned_endmembers, 
+                              save_path=f'endmember_heatmap_{dataset_name}.png')
 
     # 可视化
     plot_results(trainer.history, pred_abundance[:100], test_abundance[:100])
@@ -178,7 +186,7 @@ def plot_results(history, pred_abundance, true_abundance):
 if __name__ == '__main__':
     # 选择模式：'train' 或 'test'
     mode = 'train'  # 修改为 'test' 即可只评估
-    # mode = 'test'
+    mode = 'test'
     print("Testing on Jasper Ridge dataset...")
     model_jasper, metrics_jasper = run_experiment('jasper', 'cnn', mode=mode)
 
