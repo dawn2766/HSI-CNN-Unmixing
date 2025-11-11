@@ -9,26 +9,34 @@ from compare_abundance_visual import plot_abundance_comparison, plot_endmember_c
 
 def plot_abundance_comparison(true_abundance, pred_abundance, img_shape, save_path=None):
     """
-    可视化真实丰度与估计丰度的灰度分布对比
+    可视化真实丰度与估计丰度的伪彩色热力图对比
     """
     endmember_names = ["Tree", "Water", "Soil", "Road"]
     n_endmembers = true_abundance.shape[1]
-    plt.figure(figsize=(8 * n_endmembers, 8))
+    
+    fig, axes = plt.subplots(2, n_endmembers, figsize=(4 * n_endmembers, 8))
+    
     for i in range(n_endmembers):
         # 真实丰度
-        plt.subplot(2, n_endmembers, i + 1)
+        ax_true = axes[0, i]
         abund_img = true_abundance[:, i].reshape(img_shape)
         title_true = f'True {endmember_names[i]}' if i < len(endmember_names) else f'True Endmember {i+1}'
-        plt.imshow(abund_img, cmap='gray')
-        plt.title(title_true)
-        plt.axis('off')
+        
+        im_true = ax_true.imshow(abund_img, cmap='jet', vmin=0, vmax=1)
+        ax_true.set_title(title_true, fontsize=12, fontweight='bold')
+        ax_true.axis('off')
+        plt.colorbar(im_true, ax=ax_true, fraction=0.046, pad=0.04)
+        
         # 估计丰度
-        plt.subplot(2, n_endmembers, n_endmembers + i + 1)
+        ax_pred = axes[1, i]
         pred_img = pred_abundance[:, i].reshape(img_shape)
         title_pred = f'Estimated {endmember_names[i]}' if i < len(endmember_names) else f'Estimated Endmember {i+1}'
-        plt.imshow(pred_img, cmap='gray')
-        plt.title(title_pred)
-        plt.axis('off')
+        
+        im_pred = ax_pred.imshow(pred_img, cmap='jet', vmin=0, vmax=1)
+        ax_pred.set_title(title_pred, fontsize=12, fontweight='bold')
+        ax_pred.axis('off')
+        plt.colorbar(im_pred, ax=ax_pred, fraction=0.046, pad=0.04)
+    
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -128,15 +136,15 @@ def run_experiment(dataset_name='jasper', model_type='cnn', mode='train'):
     # 比较端元
     learned_endmembers = model.get_endmembers()
     if endmembers is not None:
-        endmember_sad = mean_sad(endmembers, learned_endmembers)
+        # 转置learned_endmembers以匹配endmembers的形状 (n_bands, n_endmembers)
+        learned_endmembers_transposed = learned_endmembers.T
+        endmember_sad = mean_sad(endmembers, learned_endmembers_transposed)
         print(f"Mean SAD (Endmembers): {endmember_sad:.6f}")
         
         # 可视化端元重构
         print("\nVisualizing endmember reconstruction...")
-        plot_endmember_comparison(endmembers, learned_endmembers, 
+        plot_endmember_comparison(endmembers, learned_endmembers_transposed, 
                                  save_path=f'endmember_comparison_{dataset_name}.png')
-        plot_endmember_heatmap(endmembers, learned_endmembers, 
-                              save_path=f'endmember_heatmap_{dataset_name}.png')
 
     # 可视化
     plot_results(trainer.history, pred_abundance[:100], test_abundance[:100])
@@ -186,9 +194,9 @@ def plot_results(history, pred_abundance, true_abundance):
 if __name__ == '__main__':
     # 选择模式：'train' 或 'test'
     mode = 'train'  # 修改为 'test' 即可只评估
-    mode = 'test'
+    # mode = 'test'
     print("Testing on Jasper Ridge dataset...")
-    model_jasper, metrics_jasper = run_experiment('jasper', 'cnn', mode=mode)
+    model_jasper, metrics_jasper = run_experiment('jasper', 'autoencoder', mode=mode)
 
     # # 在Urban数据集上测试
     # print("\n\nTesting on Urban dataset...")

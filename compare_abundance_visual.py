@@ -45,7 +45,7 @@ def plot_endmember_comparison(true_endmembers, learned_endmembers, save_path=Non
 
 def plot_abundance_comparison(true_abundance, pred_abundance, img_shape, save_path=None):
     """
-    可视化真实丰度与估计丰度的灰度分布对比
+    可视化真实丰度与估计丰度的伪彩色热力图对比
 
     Args:
         true_abundance: (n_pixels, n_endmembers)
@@ -55,22 +55,30 @@ def plot_abundance_comparison(true_abundance, pred_abundance, img_shape, save_pa
     """
     endmember_names = ["Tree", "Water", "Soil", "Road"]
     n_endmembers = true_abundance.shape[1]
-    plt.figure(figsize=(8 * n_endmembers, 8))
+    
+    fig, axes = plt.subplots(2, n_endmembers, figsize=(4 * n_endmembers, 8))
+    
     for i in range(n_endmembers):
         # 真实丰度
-        plt.subplot(2, n_endmembers, i + 1)
+        ax_true = axes[0, i]
         abund_img = true_abundance[:, i].reshape(img_shape)
         title_true = f'True {endmember_names[i]}' if i < len(endmember_names) else f'True Endmember {i+1}'
-        plt.imshow(abund_img, cmap='gray')
-        plt.title(title_true)
-        plt.axis('off')
+        
+        im_true = ax_true.imshow(abund_img, cmap='jet', vmin=0, vmax=1)
+        ax_true.set_title(title_true, fontsize=12, fontweight='bold')
+        ax_true.axis('off')
+        plt.colorbar(im_true, ax=ax_true, fraction=0.046, pad=0.04)
+        
         # 估计丰度
-        plt.subplot(2, n_endmembers, n_endmembers + i + 1)
+        ax_pred = axes[1, i]
         pred_img = pred_abundance[:, i].reshape(img_shape)
         title_pred = f'Estimated {endmember_names[i]}' if i < len(endmember_names) else f'Estimated Endmember {i+1}'
-        plt.imshow(pred_img, cmap='gray')
-        plt.title(title_pred)
-        plt.axis('off')
+        
+        im_pred = ax_pred.imshow(pred_img, cmap='jet', vmin=0, vmax=1)
+        ax_pred.set_title(title_pred, fontsize=12, fontweight='bold')
+        ax_pred.axis('off')
+        plt.colorbar(im_pred, ax=ax_pred, fraction=0.046, pad=0.04)
+    
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -101,5 +109,7 @@ if __name__ == '__main__':
     
     # 可视化端元重构
     learned_endmembers = model.get_endmembers()
+    # 转置learned_endmembers以匹配endmembers的形状 (n_bands, n_endmembers)
+    learned_endmembers_transposed = learned_endmembers.T
     print("\nVisualizing endmember reconstruction...")
-    plot_endmember_comparison(endmembers, learned_endmembers, save_path='endmember_comparison.png')
+    plot_endmember_comparison(endmembers, learned_endmembers_transposed, save_path='endmember_comparison.png')
